@@ -1,0 +1,13 @@
+# frontend
+learnpath-analytics-main/node_modules/
+learnpath-analytics-main/dist/
+
+# backend
+intelligent-learning-backend/node_modules/
+intelligent-learning-backend/.env
+
+# general
+.env
+*.log
+.DS_Store
+.vscode/
