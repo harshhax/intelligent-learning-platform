@@ -1,7 +1,7 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  LayoutDashboard, BookOpen, PenTool, BarChart3, AlertTriangle,
+  LayoutDashboard, PenTool, BarChart3, AlertTriangle,
   CalendarDays, Lightbulb, Trophy, MessageCircle, User, LogOut,
   Settings, Users, Upload, FileText, Bell
 } from "lucide-react";
@@ -11,7 +11,6 @@ import logo from "@/assets/logo.png";
 
 const studentMenu = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Skills", url: "/skills", icon: BookOpen },
   { title: "Take Quiz", url: "/quiz", icon: PenTool },
   { title: "Results", url: "/results", icon: BarChart3 },
   { title: "Weak Topics", url: "/weak-topics", icon: AlertTriangle },
@@ -23,8 +22,7 @@ const studentMenu = [
 ];
 
 const adminMenu = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Course Management", url: "/admin/courses", icon: BookOpen },
+  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Question Upload", url: "/admin/questions", icon: Upload },
   { title: "Study Materials", url: "/admin/materials", icon: FileText },
   { title: "Student Analytics", url: "/admin/analytics", icon: BarChart3 },

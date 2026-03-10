@@ -1,10 +1,30 @@
 import { motion } from "framer-motion";
-import { quizAttempts } from "@/data/mockData";
+import API from "@/api/axios";
+import { useEffect, useState } from "react";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export default function Results() {
+
+  const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadResults = async () => {
+      try {
+
+        const res = await API.get("/student/results");
+
+        setQuizAttempts(res.data);
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    loadResults();
+  }, []);
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item}>
@@ -24,24 +44,38 @@ export default function Results() {
               <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground">Time</th>
             </tr>
           </thead>
+
           <tbody>
             {quizAttempts.map((a) => (
               <tr key={a.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                 <td className="px-4 py-3 text-sm text-foreground">{a.date}</td>
                 <td className="px-4 py-3 text-sm text-foreground">{a.subjectName}</td>
                 <td className="px-4 py-3 text-sm font-medium text-foreground">{a.topicName}</td>
-                <td className="px-4 py-3 text-center text-sm font-semibold text-primary">{a.score}/{a.totalQuestions}</td>
+                <td className="px-4 py-3 text-center text-sm font-semibold text-primary">
+                  {a.score}/{a.totalQuestions}
+                </td>
+
                 <td className="px-4 py-3 text-center">
-                  <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    a.accuracy >= 80 ? "bg-success/10 text-success" : a.accuracy >= 50 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
-                  }`}>
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      a.accuracy >= 80
+                        ? "bg-success/10 text-success"
+                        : a.accuracy >= 50
+                        ? "bg-warning/10 text-warning"
+                        : "bg-destructive/10 text-destructive"
+                    }`}
+                  >
                     {a.accuracy}%
                   </span>
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-muted-foreground">{Math.round(a.timeTaken / 60)}m</td>
+
+                <td className="px-4 py-3 text-center text-sm text-muted-foreground">
+                  {Math.round(a.timeTaken / 60)}m
+                </td>
               </tr>
             ))}
           </tbody>
+
         </table>
       </motion.div>
     </motion.div>

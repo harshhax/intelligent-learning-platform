@@ -1,201 +1,601 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { subjects, topics, quizQuestions } from "@/data/mockData";
-import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { getQuizByTopic, submitQuiz as submitQuizAPI } from "@/services/quizService";
 import { Clock, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 
-type Phase = "select" | "quiz" | "result";
+type Phase = "subject" | "topic" | "quiz" | "result";
 
 export default function Quiz() {
-  const navigate = useNavigate();
-  const [phase, setPhase] = useState<Phase>("select");
+
+  const [phase, setPhase] = useState<Phase>("subject");
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [timeLeft, setTimeLeft] = useState(300);
-  const [submitted, setSubmitted] = useState(false);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [result, setResult] = useState<any>(null);
 
-  const questions = quizQuestions.filter((q) => q.topicId === selectedTopic);
   const question = questions[currentQ];
 
-  const startQuiz = (topicId: string) => {
-    setSelectedTopic(topicId);
-    setPhase("quiz");
-    setCurrentQ(0);
-    setAnswers({});
-    setSubmitted(false);
-    setTimeLeft(300);
+  /* ---------- LOAD QUIZ ---------- */
+
+  const startQuiz = async (topicId: string) => {
+    try {
+
+      setSelectedTopic(topicId);
+
+      const data = await getQuizByTopic(topicId);
+      setQuestions(data);
+
+      setPhase("quiz");
+      setCurrentQ(0);
+      setAnswers({});
+
+    } catch {
+      alert("Failed to load quiz");
+    }
   };
+
+  /* ---------- SELECT ANSWER ---------- */
 
   const selectAnswer = (qId: string, optIdx: number) => {
-    if (!submitted) setAnswers((prev) => ({ ...prev, [qId]: optIdx }));
+    setAnswers(prev => ({ ...prev, [qId]: optIdx }));
   };
 
-  const submitQuiz = () => {
-    setSubmitted(true);
-    setPhase("result");
+  /* ---------- SUBMIT QUIZ ---------- */
+
+  const submitQuiz = async () => {
+    try {
+
+      const formattedAnswers = Object.keys(answers).map(qid => ({
+        questionId: qid,
+        selectedOption: answers[qid],
+        responseTime: 15
+      }));
+
+      const res = await submitQuizAPI(selectedTopic!, formattedAnswers);
+
+      setResult(res);
+      setPhase("result");
+
+    } catch {
+      alert("Submission failed");
+    }
   };
 
-  const score = questions.reduce((acc, q) => acc + (answers[q.id] === q.correctAnswer ? 1 : 0), 0);
+  /* ================= SUBJECT SCREEN ================= */
 
-  if (phase === "select") {
+  if (phase === "subject") {
+
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <div className="space-y-6">
+
         <div>
-          <h1 className="text-xl font-bold text-foreground">Take a Quiz</h1>
-          <p className="text-sm text-muted-foreground">Select a topic to begin</p>
+          <h1 className="text-2xl font-bold">Take a Quiz</h1>
+          <p className="text-muted-foreground text-sm">
+            Select a subject
+          </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {subjects.map((s) => {
-            const subTopics = topics.filter((t) => t.subjectId === s.id);
-            return (
-              <div key={s.id} className="rounded-xl border border-border bg-card p-5 shadow-card">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">{s.icon}</span>
-                  <h3 className="text-sm font-semibold text-foreground">{s.name}</h3>
-                </div>
-                <div className="space-y-2">
-                  {subTopics.map((t) => {
-                    const hasQuestions = quizQuestions.some((q) => q.topicId === t.id);
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => hasQuestions && startQuiz(t.id)}
-                        disabled={!hasQuestions}
-                        className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-left text-sm font-medium text-foreground hover:bg-primary/10 hover:border-primary/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {t.name}
-                        {!hasQuestions && <span className="ml-2 text-xs text-muted-foreground">(Coming soon)</span>}
-                      </button>
-                    );
-                  })}
-                </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+
+          {/* DATA STRUCTURES */}
+          <div
+            onClick={() => {
+              setSelectedSubject("dsa");
+              setPhase("topic");
+            }}
+            className="cursor-pointer rounded-xl border bg-card shadow hover:shadow-lg transition"
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1518770660439-4636190af475"
+              className="h-40 w-full object-cover rounded-t-xl"
+            />
+
+            <div className="p-4 space-y-3">
+
+              <h3 className="font-semibold text-lg">
+                Data Structures
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Levels: 10
+              </p>
+
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 w-1/4 bg-primary rounded-full" />
               </div>
-            );
-          })}
+
+              <p className="text-xs text-muted-foreground">
+                Progress: 2 / 10 levels
+              </p>
+
+            </div>
+
+          </div>
+
+
+          {/* C PROGRAMMING */}
+          <div
+            onClick={() => {
+              setSelectedSubject("c");
+              setPhase("topic");
+            }}
+            className="cursor-pointer rounded-xl border bg-card shadow hover:shadow-lg transition"
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1555949963-aa79dcee981c"
+              className="h-40 w-full object-cover rounded-t-xl"
+            />
+
+            <div className="p-4 space-y-3">
+
+              <h3 className="font-semibold text-lg">
+                C Programming
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Levels: 8
+              </p>
+
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 w-1/5 bg-primary rounded-full" />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Progress: 1 / 8 levels
+              </p>
+
+            </div>
+
+          </div>
+
+
+          {/* DBMS */}
+          <div
+            onClick={() => {
+              setSelectedSubject("dbms");
+              setPhase("topic");
+            }}
+            className="cursor-pointer rounded-xl border bg-card shadow hover:shadow-lg transition"
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31"
+              className="h-40 w-full object-cover rounded-t-xl"
+            />
+
+            <div className="p-4 space-y-3">
+
+              <h3 className="font-semibold text-lg">
+                DBMS
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Levels: 6
+              </p>
+
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 w-1/6 bg-primary rounded-full" />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Progress: 1 / 6 levels
+              </p>
+
+            </div>
+
+          </div>
+
+
+          {/* OPERATING SYSTEMS */}
+          <div
+            onClick={() => {
+              setSelectedSubject("os");
+              setPhase("topic");
+            }}
+            className="cursor-pointer rounded-xl border bg-card shadow hover:shadow-lg transition"
+          >
+
+            <img
+              src="https://www.trentonsystems.com/hs-fs/hubfs/Operating%20System%20.jpeg?width=3099&name=Operating%20System%20.jpeg"
+              className="h-40 w-full object-cover rounded-t-xl"
+            />
+
+            <div className="p-4 space-y-3">
+
+              <h3 className="font-semibold text-lg">
+                Operating Systems
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Levels: 7
+              </p>
+
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 w-1/3 bg-primary rounded-full" />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Progress: 3 / 7 levels
+              </p>
+
+            </div>
+
+          </div>
+
+
+          {/* COMPUTER NETWORKS */}
+          <div
+            onClick={() => {
+              setSelectedSubject("cn");
+              setPhase("topic");
+            }}
+            className="cursor-pointer rounded-xl border bg-card shadow hover:shadow-lg transition"
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1519389950473-47ba0277781c"
+              className="h-40 w-full object-cover rounded-t-xl"
+            />
+
+            <div className="p-4 space-y-3">
+
+              <h3 className="font-semibold text-lg">
+                Computer Networks
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Levels: 5
+              </p>
+
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 w-1/4 bg-primary rounded-full" />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Progress: 1 / 5 levels
+              </p>
+
+            </div>
+
+          </div>
+
         </div>
-      </motion.div>
+
+      </div>
     );
   }
 
-  if (phase === "result") {
-    const accuracy = Math.round((score / questions.length) * 100);
-    return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-lg space-y-6">
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-card text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full gradient-primary">
-            <CheckCircle className="h-10 w-10 text-primary-foreground" />
-          </div>
-          <h2 className="text-xl font-bold text-foreground">Quiz Complete!</h2>
-          <p className="text-muted-foreground text-sm mt-1">{topics.find((t) => t.id === selectedTopic)?.name}</p>
+  /* ================= TOPIC SCREEN ================= */
 
-          <div className="mt-6 grid grid-cols-3 gap-4">
-            <div className="rounded-lg bg-secondary p-3">
-              <p className="text-2xl font-bold text-primary">{score}/{questions.length}</p>
-              <p className="text-xs text-muted-foreground">Score</p>
-            </div>
-            <div className="rounded-lg bg-secondary p-3">
-              <p className="text-2xl font-bold text-primary">{accuracy}%</p>
-              <p className="text-xs text-muted-foreground">Accuracy</p>
-            </div>
-            <div className="rounded-lg bg-secondary p-3">
-              <p className="text-2xl font-bold text-primary">{Math.round((300 - timeLeft) / 60)}m</p>
-              <p className="text-xs text-muted-foreground">Time</p>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-2">
-            {questions.map((q, i) => (
-              <div key={q.id} className={`flex items-center gap-2 rounded-lg p-2 text-left text-sm ${answers[q.id] === q.correctAnswer ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
-                <span className="font-medium">Q{i + 1}:</span>
-                <span className="flex-1 truncate">{q.text}</span>
-                <span>{answers[q.id] === q.correctAnswer ? "✓" : "✗"}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 flex gap-3">
-            <button onClick={() => setPhase("select")} className="flex-1 rounded-lg border border-border bg-secondary py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-              Back to Topics
-            </button>
-            <button onClick={() => startQuiz(selectedTopic!)} className="flex-1 rounded-lg gradient-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity">
-              Retry
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
+  if (phase === "topic") {
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-2xl space-y-6">
-      {/* Timer & Progress */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">
-          Question {currentQ + 1} of {questions.length}
-        </span>
-        <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-mono font-medium text-foreground">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}</span>
-        </div>
-      </div>
+    <div className="space-y-8">
 
-      <div className="h-1.5 w-full rounded-full bg-secondary">
-        <div className="h-full rounded-full gradient-primary transition-all" style={{ width: `${((currentQ + 1) / questions.length) * 100}%` }} />
-      </div>
+      <button
+        onClick={() => setPhase("subject")}
+        className="text-primary text-sm"
+      >
+        ← Back
+      </button>
 
-      {/* Question */}
-      <AnimatePresence mode="wait">
-        <motion.div key={question?.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="rounded-xl border border-border bg-card p-6 shadow-card">
-          <h3 className="text-lg font-semibold text-foreground mb-6">{question?.text}</h3>
-          <div className="space-y-3">
-            {question?.options.map((opt, i) => (
-              <button
-                key={i}
-                onClick={() => selectAnswer(question.id, i)}
-                className={`w-full rounded-lg border px-4 py-3 text-left text-sm font-medium transition-all ${
-                  answers[question.id] === i
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-secondary text-foreground hover:border-primary/30"
-                }`}
-              >
-                <span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">
-                  {String.fromCharCode(65 + i)}
-                </span>
-                {opt}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      </AnimatePresence>
+      <h2 className="text-2xl font-semibold">Select Topic</h2>
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <button
-          onClick={() => setCurrentQ(Math.max(0, currentQ - 1))}
-          disabled={currentQ === 0}
-          className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors disabled:opacity-40"
+      <div className="space-y-6">
+
+        {/* BINARY TREES */}
+        <div
+          onClick={() => startQuiz("699bf65d2efe159610254c68")}
+          className="cursor-pointer border rounded-xl p-6 bg-card shadow hover:shadow-lg transition"
         >
-          <ChevronLeft className="h-4 w-4" /> Previous
+
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+
+              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                1
+              </div>
+
+              <h3 className="text-lg font-semibold">
+                Binary Trees
+              </h3>
+
+            </div>
+
+            <span className="text-sm bg-primary/10 px-3 py-1 rounded-full">
+              Attempts: 0
+            </span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <div className="space-y-3">
+
+              <div className="bg-muted rounded-lg p-3">
+                1. Tree Traversals (Inorder, Preorder, Postorder)
+              </div>
+
+              <div className="bg-muted rounded-lg p-3">
+                2. Binary Tree Properties
+              </div>
+
+            </div>
+
+            <div className="space-y-3 text-sm">
+
+              <div>
+                <p className="font-semibold">XP Reward</p>
+                <p>+60 xp</p>
+              </div>
+
+              <div>
+                <p className="font-semibold">Pre Requisite</p>
+                <p>Linked Lists</p>
+              </div>
+
+              <div>
+                <p className="font-semibold">Assessment Type</p>
+                <p>Programming</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* LINKED LIST */}
+        <div
+          onClick={() => startQuiz("699bf64b2efe159610254c62")}
+          className="cursor-pointer border rounded-xl p-6 bg-card shadow hover:shadow-lg transition"
+        >
+
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+
+              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                2
+              </div>
+
+              <h3 className="text-lg font-semibold">
+                Linked Lists
+              </h3>
+
+            </div>
+
+            <span className="text-sm bg-primary/10 px-3 py-1 rounded-full">
+              Attempts: 0
+            </span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <div className="space-y-3">
+
+              <div className="bg-muted rounded-lg p-3">
+                1. Singly Linked List
+              </div>
+
+              <div className="bg-muted rounded-lg p-3">
+                2. Doubly Linked List
+              </div>
+
+            </div>
+
+            <div className="space-y-3 text-sm">
+
+              <div>
+                <p className="font-semibold">XP Reward</p>
+                <p>+50 xp</p>
+              </div>
+
+              <div>
+                <p className="font-semibold">Pre Requisite</p>
+                <p>Arrays</p>
+              </div>
+
+              <div>
+                <p className="font-semibold">Assessment Type</p>
+                <p>Programming</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* STACK & QUEUE */}
+        <div
+          onClick={() => startQuiz("699bf6562efe159610254c65")}
+          className="cursor-pointer border rounded-xl p-6 bg-card shadow hover:shadow-lg transition"
+        >
+
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+
+              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                3
+              </div>
+
+              <h3 className="text-lg font-semibold">
+                Stack & Queue
+              </h3>
+
+            </div>
+
+            <span className="text-sm bg-primary/10 px-3 py-1 rounded-full">
+              Attempts: 0
+            </span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <div className="space-y-3">
+
+              <div className="bg-muted rounded-lg p-3">
+                1. Stack Operations
+              </div>
+
+              <div className="bg-muted rounded-lg p-3">
+                2. Queue Operations
+              </div>
+
+            </div>
+
+            <div className="space-y-3 text-sm">
+
+              <div>
+                <p className="font-semibold">XP Reward</p>
+                <p>+60 xp</p>
+              </div>
+
+              <div>
+                <p className="font-semibold">Pre Requisite</p>
+                <p>Linked Lists</p>
+              </div>
+
+              <div>
+                <p className="font-semibold">Assessment Type</p>
+                <p>Programming</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+  /* ================= RESULT SCREEN ================= */
+
+  if (phase === "result") {
+
+    return (
+      <div className="mx-auto max-w-lg text-center space-y-6">
+
+        <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+
+        <h2 className="text-2xl font-bold">
+          Quiz Complete!
+        </h2>
+
+        <div className="grid grid-cols-3 gap-4">
+
+          <div className="p-4 bg-secondary rounded-lg">
+            <p className="text-2xl font-bold">{result?.score}</p>
+            <p>Score</p>
+          </div>
+
+          <div className="p-4 bg-secondary rounded-lg">
+            <p className="text-2xl font-bold">{result?.percentage}%</p>
+            <p>Accuracy</p>
+          </div>
+
+          <div className="p-4 bg-secondary rounded-lg">
+            <p className="text-2xl font-bold">
+              {result?.gamification?.xpEarned}
+            </p>
+            <p>XP Earned</p>
+          </div>
+
+        </div>
+
+        <button
+          onClick={() => setPhase("subject")}
+          className="bg-primary text-white px-6 py-3 rounded-lg"
+        >
+          Take Another Quiz
+        </button>
+
+      </div>
+    );
+  }
+
+  /* ================= QUIZ SCREEN ================= */
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+
+      <div className="flex justify-between">
+        <span>
+          Question {currentQ + 1} / {questions.length}
+        </span>
+
+        <Clock className="h-4 w-4" />
+      </div>
+
+      <motion.div
+        key={question?._id}
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="bg-card p-6 rounded-xl border"
+      >
+
+        <h3 className="text-lg font-semibold mb-6">
+          {question?.questionText}
+        </h3>
+
+        <div className="space-y-3">
+
+          {question?.options.map((opt: string, i: number) => (
+            <button
+              key={i}
+              onClick={() => selectAnswer(question._id, i)}
+              className={`w-full text-left p-3 border rounded-lg ${
+                answers[question._id] === i
+                  ? "bg-primary/10 border-primary"
+                  : ""
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+
+        </div>
+
+      </motion.div>
+
+      <div className="flex justify-between">
+
+        <button
+          disabled={currentQ === 0}
+          onClick={() => setCurrentQ(currentQ - 1)}
+          className="px-4 py-2 border rounded-lg"
+        >
+          <ChevronLeft /> Prev
         </button>
 
         {currentQ === questions.length - 1 ? (
           <button
             onClick={submitQuiz}
-            disabled={Object.keys(answers).length < questions.length}
-            className="rounded-lg gradient-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="px-6 py-2 bg-primary text-white rounded-lg"
           >
             Submit Quiz
           </button>
         ) : (
           <button
-            onClick={() => setCurrentQ(Math.min(questions.length - 1, currentQ + 1))}
-            className="flex items-center gap-2 rounded-lg gradient-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+            onClick={() => setCurrentQ(currentQ + 1)}
+            className="px-6 py-2 bg-primary text-white rounded-lg"
           >
-            Next <ChevronRight className="h-4 w-4" />
+            Next <ChevronRight />
           </button>
         )}
+
       </div>
-    </motion.div>
+
+    </div>
   );
 }

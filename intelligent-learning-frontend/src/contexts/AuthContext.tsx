@@ -1,10 +1,16 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { User } from "@/types";
-import { currentUser, adminUser } from "@/data/mockData";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import API from "@/api/axios";
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -14,19 +20,37 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (email: string, password: string) => {
-    if (password !== "bitsathy") return false;
-    if (email === "admin@bitsathy.ac.in") {
-      setUser(adminUser);
-    } else if (email === "student@bitsathy.ac.in") {
-      setUser(currentUser);
-    } else {
+  // keep login after refresh
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) setUser(JSON.parse(storedUser));
+  }, []);
+
+  // 🔥 REAL LOGIN (calls backend)
+  const login = async (email: string, password: string) => {
+    try {
+      const res = await API.post("/auth/login", { email, password });
+
+      const userData = res.data;
+
+      localStorage.setItem("token", userData.token);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      setUser(userData);
+      return true;
+
+    } catch (err: any) {
+      console.log("LOGIN ERROR:", err?.response?.data || err);
       return false;
     }
-    return true;
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    window.location.href = "/login";
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
