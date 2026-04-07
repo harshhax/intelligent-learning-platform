@@ -252,3 +252,6 @@ npm run dev
 ## Project Type
 
 Academic Mini Project — Full Stack Web Application
+
+RENDER:-
+https://intelligent-learning-platform-1.onrender.com
