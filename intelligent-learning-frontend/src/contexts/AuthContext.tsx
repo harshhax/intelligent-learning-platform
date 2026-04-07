@@ -28,8 +28,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // 🔥 REAL LOGIN (calls backend)
   const login = async (email: string, password: string) => {
+    console.log("ENV VALUE:", import.meta.env.VITE_API_URL);
     try {
-      const res = await API.post("/auth/login", { email, password });
+      const res = await API.post("/api/auth/login", { email, password });
 
       const userData = res.data;
 
