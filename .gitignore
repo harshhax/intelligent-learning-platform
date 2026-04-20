@@ -1,0 +1,40 @@
+# ---------------- Logs ----------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---------------- Dependencies ----------------
+node_modules/
+
+# ---------------- Frontend build ----------------
+learnpath-analytics-main/node_modules/
+learnpath-analytics-main/dist/
+
+# ---------------- Backend ----------------
+intelligent-learning-backend/node_modules/
+intelligent-learning-backend/.env
+
+# ---------------- Environment variables ----------------
+.env
+.env.local
+.env.development
+.env.production
+
+# ---------------- Build folders ----------------
+dist/
+build/
+.vite/
+
+# ---------------- Editor / IDE ----------------
+.vscode/
+.idea/
+
+# ---------------- OS files ----------------
+.DS_Store
+Thumbs.db
+
+# ---------------- Coverage / temp ----------------
+coverage/
+tmp/
